@@ -338,69 +338,44 @@ a:hover { color: var(--accent-hover); }
   padding: 2.5rem 2rem 4rem;
   min-height: 100vh;
 }
-#reader.pdf-mode {
+#reader.note-mode {
   max-width: none;
+  padding: 1rem 0;
+}
+
+/* ---------- Note Render (HTML from pdftohtml) ---------- */
+.note-render {
+  width: 100%;
+}
+.note-render .note-page {
+  overflow: hidden;
+}
+.note-render .note-page:not(:first-child) {
+  border-top: 1px solid var(--border);
+}
+
+/* Hide pdftohtml cruft */
+.note-render .note-page .xflip,
+.note-render .note-page .yflip,
+.note-render .note-page .xyflip,
+.note-render .note-page a[name],
+.note-render .note-page > style {
+  display: none;
+}
+
+/* Page container: keep original dimensions, scaled by JS */
+.note-render .note-page div[style*="position:relative"] {
+  position: relative;
+  margin: 0 auto;
+  overflow: hidden;
+}
+.note-render .note-page p {
+  position: absolute;
+  white-space: nowrap;
+  margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-#reader.pdf-mode #typst-output {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-/* ---------- PDF Viewer ---------- */
-.pdf-viewer {
-  flex: 1;
-  display: flex;
-  width: 100%;
-}
-.pdf-embed {
-  flex: 1;
-  width: 100%;
-  border: none;
-  background: var(--bg-card);
-}
-
-[data-theme="dark"] .pdf-embed {
-  filter: invert(0.92) hue-rotate(180deg);
-}
-
-/* Open PDF button bar */
-.pdf-bar {
-  display: flex;
-  justify-content: center;
-  padding: 0.5rem;
-}
-.pdf-open-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.5rem 1rem;
-  border-radius: var(--radius-sm);
-  background: var(--accent);
-  color: #fff;
-  font-size: 0.85rem;
-  font-weight: 500;
-  text-decoration: none;
-  transition: background var(--transition);
-}
-.pdf-open-btn:hover {
-  background: var(--accent-hover);
-  color: #fff;
-}
-
-@media (max-width: 768px) {
-  .pdf-embed { display: none; }
-  .pdf-bar { padding: 2rem 1rem 1rem; }
-  .pdf-open-btn {
-    width: 100%;
-    justify-content: center;
-    padding: 0.75rem 1rem;
-    font-size: 1rem;
-  }
+  line-height: 1.4;
+  color: var(--text);
 }
 
 /* Loading / error states inside reader */

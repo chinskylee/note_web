@@ -1,5 +1,8 @@
 /**
- * Notes App — Tree file browser + PDF viewer
+ * Notes App — Pre-compiled HTML viewer
+ *
+ * .typ → PDF → HTML (via pdftohtml) at build time.
+ * Fully selectable text, zero plugins, works on all devices.
  */
 
 const state = { notes: [], activeId: null };
@@ -35,17 +38,20 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e =
   if (!savedTheme) setTheme(e.matches ? 'dark' : 'light');
 });
 
-// ── Sidebar collapse (desktop) ──
+// ── Sidebar collapse ──
 let sidebarCollapsed = (() => { try { return localStorage.getItem('sidebar-collapsed') === 'true'; } catch {} })();
-
 function applySidebarState() {
   document.documentElement.classList.toggle('sidebar-hidden', sidebarCollapsed);
 }
 applySidebarState();
-
 collapseBtn?.addEventListener('click', () => {
   sidebarCollapsed = !sidebarCollapsed;
   try { localStorage.setItem('sidebar-collapsed', sidebarCollapsed); } catch {}
+  applySidebarState();
+});
+expandBtn?.addEventListener('click', () => {
+  sidebarCollapsed = false;
+  try { localStorage.setItem('sidebar-collapsed', 'false'); } catch {}
   applySidebarState();
 });
 
@@ -57,20 +63,11 @@ async function loadManifest() {
 }
 
 // ── Tree builder ──
-/**
- * Convert flat manifest entries into a nested tree.
- * Returns: [ TreeNode, … ]
- * TreeNode = { type:'folder', name, children:[TreeNode] }
- *          | { type:'file', id, title, pages }
- */
 function buildTree(entries) {
   const root = { type: 'folder', name: '', children: [] };
-
   for (const e of entries) {
     const parts = e.id.split('/');
     let node = root;
-
-    // Walk/create folder chain
     for (let i = 0; i < parts.length - 1; i++) {
       let child = node.children.find(c => c.type === 'folder' && c.name === parts[i]);
       if (!child) {
@@ -79,27 +76,16 @@ function buildTree(entries) {
       }
       node = child;
     }
-
-    // Add file leaf
-    node.children.push({
-      type: 'file',
-      name: e.title,
-      id: e.id,
-      title: e.title,
-      pages: e.pages,
-    });
+    node.children.push({ type: 'file', name: e.title, id: e.id, title: e.title, pages: e.pages });
   }
-
-  // Sort: folders first, then files, alphabetically
-  function sortChildren(node) {
-    node.children.sort((a, b) => {
+  function sortChildren(n) {
+    n.children.sort((a, b) => {
       if (a.type !== b.type) return a.type === 'folder' ? -1 : 1;
       return a.name.localeCompare(b.name);
     });
-    node.children.forEach(c => { if (c.type === 'folder') sortChildren(c); });
+    n.children.forEach(c => { if (c.type === 'folder') sortChildren(c); });
   }
   sortChildren(root);
-
   return root.children;
 }
 
@@ -109,31 +95,26 @@ function renderTree(tree) {
   let folderState = (() => { try { return JSON.parse(localStorage.getItem('tree-folders') || '{}'); } catch {} })() || {};
 
   function createFolderEl(folder, depth) {
-    const id = folder.name;
-    const open = folderState[id] !== false;
+    const open = folderState[folder.name] !== false;
     const li = document.createElement('li');
     li.className = 'tree-folder';
-    li.dataset.depth = depth;
-
     const label = document.createElement('div');
     label.className = 'tree-folder-label';
     label.style.paddingLeft = `${12 + depth * 16}px`;
     label.innerHTML = `
       <svg class="folder-chevron ${open ? 'open' : ''}" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       <svg class="folder-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
-      <span class="tree-folder-name">${escHtml(folder.name)}</span>
-    `;
+      <span class="tree-folder-name">${escHtml(folder.name)}</span>`;
     label.addEventListener('click', () => {
       const ul = li.querySelector('.tree-children');
       const chevron = label.querySelector('.folder-chevron');
       const isOpen = ul.style.display !== 'none';
       ul.style.display = isOpen ? 'none' : '';
       chevron.classList.toggle('open', !isOpen);
-      folderState[id] = !isOpen;
+      folderState[folder.name] = !isOpen;
       try { localStorage.setItem('tree-folders', JSON.stringify(folderState)); } catch {}
     });
     li.appendChild(label);
-
     const ul = document.createElement('ul');
     ul.className = 'tree-children';
     ul.style.display = open ? '' : 'none';
@@ -151,13 +132,9 @@ function renderTree(tree) {
     li.dataset.id = file.id;
     li.style.paddingLeft = `${12 + depth * 16}px`;
     li.innerHTML = `
-      <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/>
-      </svg>
+      <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       <span class="title">${escHtml(file.title)}</span>
-      ${file.pages > 1 ? `<span class="badge">${file.pages}p</span>` : ''}
-    `;
+      ${file.pages > 1 ? `<span class="badge">${file.pages}p</span>` : ''}`;
     li.addEventListener('click', () => navigateTo(file.id));
     return li;
   }
@@ -174,42 +151,71 @@ function escHtml(s) {
 }
 
 // ── Navigation ──
-function navigateTo(id) {
+async function navigateTo(id) {
   if (id === state.activeId) return;
   state.activeId = id;
-  reader.classList.add('pdf-mode');
-  output.innerHTML = `<div class="typst-loading"><div class="spinner"></div><p>Loading…</p></div>`;
-  const pdfUrl = `assets/compiled/${id}/doc.pdf`;
-  output.innerHTML = `<div class="pdf-viewer fade-in">
-    <iframe src="${encodeURI(pdfUrl)}#view=FitH" class="pdf-embed" title="PDF viewer"></iframe>
-    <div class="pdf-bar">
-      <a href="${encodeURI(pdfUrl)}" class="pdf-open-btn" target="_blank">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-        Open PDF
-      </a>
-    </div>
-  </div>`;
-  history.replaceState(null, '', `#${id}`);
-  sidebar.classList.remove('open');
+  reader.classList.add('note-mode');
   highlightActive(id);
+
+  output.innerHTML = `<div class="typst-loading"><div class="spinner"></div><p>Loading…</p></div>`;
+
+  try {
+    const resp = await fetch(`assets/compiled/${id}/index.html`);
+    if (!resp.ok) throw new Error('Failed to load note');
+    const html = await resp.text();
+    output.innerHTML = `<div class="note-render fade-in">${html}</div>`;
+    scalePages();
+    history.replaceState(null, '', `#${id}`);
+  } catch (err) {
+    output.innerHTML = `<div class="typst-error fade-in"><h3>Failed to load note</h3><p>${err.message}</p></div>`;
+  }
+
+  sidebar.classList.remove('open');
 }
 
 function navigateHome() {
   state.activeId = null;
-  reader.classList.remove('pdf-mode');
+  reader.classList.remove('note-mode');
   history.replaceState(null, '', window.location.pathname);
+  highlightActive(null);
   output.innerHTML = `
     <div class="home-hero fade-in">
       <h1>Welcome to Notes</h1>
       <p>Your personal knowledge base, written in Typst &amp; rendered beautifully.</p>
     </div>`;
   sidebar.classList.remove('open');
-  highlightActive(null);
 }
 
 function highlightActive(id) {
   $$('.note-item').forEach(el => el.classList.toggle('active', el.dataset.id === id));
 }
+
+// ── Scale pages to fit viewport ──
+function scalePages() {
+  const containers = output.querySelectorAll('.note-page div[style*="position:relative"]');
+  containers.forEach(container => {
+    // Extract original width from style
+    const match = container.getAttribute('style').match(/width:(\d+)px/);
+    if (!match) return;
+    const origW = parseInt(match[1], 10);
+    // The container's parent (.note-page) has max-width: 820px
+    // Calculate scale to fit
+    const parentW = container.parentElement.offsetWidth;
+    if (parentW > 0 && parentW < origW) {
+      const scale = parentW / origW;
+      container.style.transform = `scale(${scale})`;
+      container.style.transformOrigin = 'top left';
+      container.style.height = `${container.offsetHeight * scale}px`;
+    }
+  });
+}
+
+// Resize handler
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(scalePages, 200);
+});
 
 // ── Hash routing ──
 function handleHash() {
@@ -227,18 +233,13 @@ async function bootstrap() {
     handleHash();
     if (!window.location.hash.slice(1)) navigateHome();
   } catch (err) {
-    overlay.innerHTML = `<div style="text-align:center;max-width:400px"><div style="font-size:2rem;opacity:0.5">⚠️</div><h3>Failed to load</h3><p style="color:var(--text-secondary);font-size:0.9rem">${err.message}</p></div>`;
+    overlay.innerHTML = `<div style="text-align:center;max-width:400px"><h3>Failed to load</h3><p style="color:var(--text-secondary)">${err.message}</p></div>`;
   }
 }
 
 // ── Events ──
 homeLink.addEventListener('click', e => { e.preventDefault(); navigateHome(); });
 toggleBtn.addEventListener('click', () => sidebar.classList.toggle('open'));
-expandBtn?.addEventListener('click', () => {
-  sidebarCollapsed = false;
-  try { localStorage.setItem('sidebar-collapsed', 'false'); } catch {}
-  applySidebarState();
-});
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') sidebar.classList.remove('open');
 });
