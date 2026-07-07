@@ -2,8 +2,6 @@
 
 A minimal, beautiful note-taking website where notes are written in **Typst** and pre-compiled to PDF for browser-native viewing with full text selection.
 
-![Screenshot](assets/screenshot.png)
-
 ## ✨ Features
 
 - **Write in Typst** — use Typst's expressive markup language
