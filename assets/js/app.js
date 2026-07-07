@@ -180,7 +180,15 @@ function navigateTo(id) {
   reader.classList.add('pdf-mode');
   output.innerHTML = `<div class="typst-loading"><div class="spinner"></div><p>Loading…</p></div>`;
   const pdfUrl = `assets/compiled/${id}/doc.pdf`;
-  output.innerHTML = `<div class="pdf-viewer fade-in"><embed src="${encodeURI(pdfUrl)}#view=FitH&toolbar=1" type="application/pdf" class="pdf-embed" /></div>`;
+  output.innerHTML = `<div class="pdf-viewer fade-in">
+    <iframe src="${encodeURI(pdfUrl)}#view=FitH" class="pdf-embed" title="PDF viewer"></iframe>
+    <div class="pdf-bar">
+      <a href="${encodeURI(pdfUrl)}" class="pdf-open-btn" target="_blank">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Open PDF
+      </a>
+    </div>
+  </div>`;
   history.replaceState(null, '', `#${id}`);
   sidebar.classList.remove('open');
   highlightActive(id);
