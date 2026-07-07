@@ -362,6 +362,10 @@ a:hover { color: var(--accent-hover); }
   display: block;
 }
 
+[data-theme="dark"] .svg-page svg {
+  filter: invert(0.9) hue-rotate(180deg);
+}
+
 .page-label {
   text-align: center;
   font-size: 0.75rem;
