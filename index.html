@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notes</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <script type="module" src="assets/js/app.js"></script>
+</head>
+<body>
+  <div id="loading-overlay">
+    <div class="spinner"></div>
+    <p>Loading…</p>
+  </div>
+
+  <aside id="sidebar">
+    <div class="sidebar-header">
+      <a href="#" id="home-link" class="logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <span>Notes</span>
+      </a>
+      <div class="sidebar-actions">
+        <button id="sidebar-collapse" class="icon-btn" aria-label="Collapse sidebar" title="Collapse sidebar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <button id="theme-toggle" class="icon-btn" aria-label="Toggle theme">
+          <svg class="sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          <svg class="moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <nav id="file-tree" aria-label="Notes">
+      <p class="section-title">Notes</p>
+      <ul id="note-list"></ul>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="https://typst.app" target="_blank" rel="noopener" class="powered-by">Powered by Typst</a>
+    </div>
+  </aside>
+
+  <main id="content">
+    <div id="reader">
+      <div id="typst-output"></div>
+    </div>
+  </main>
+
+  <button id="sidebar-expand" aria-label="Expand sidebar" title="Expand sidebar">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+  </button>
+
+  <button id="sidebar-toggle" aria-label="Toggle sidebar">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+</body>
+</html>

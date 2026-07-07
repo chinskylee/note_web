@@ -1,0 +1,62 @@
+# Deploy to GitHub Pages
+#
+# On every push to main:
+#   1. Install typst CLI
+#   2. Compile all .typ notes to SVG
+#   3. Generate manifest.json
+#   4. Deploy to GitHub Pages
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup typst
+        uses: typst-community/setup-typst@v3
+        with:
+          version: latest
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install poppler-utils (pdfinfo for page count)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils 2>/dev/null
+
+      - name: Build (compile .typ → SVG + text + manifest)
+        run: node scripts/build.js
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
