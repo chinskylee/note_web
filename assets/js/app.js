@@ -1,8 +1,6 @@
 /**
- * Notes App — Pre-compiled HTML viewer
- *
- * .typ → PDF → HTML (via pdftohtml) at build time.
- * Fully selectable text, zero plugins, works on all devices.
+ * Notes App — SVG note viewer
+ * .typ → SVG at build time.
  */
 
 const state = { notes: [], activeId: null };
@@ -154,34 +152,42 @@ function escHtml(s) {
 async function navigateTo(id) {
   if (id === state.activeId) return;
   state.activeId = id;
-  reader.classList.add('note-mode');
+  reader.classList.add('svg-mode');
   highlightActive(id);
 
   output.innerHTML = `<div class="typst-loading"><div class="spinner"></div><p>Loading…</p></div>`;
 
   try {
-    const resp = await fetch(`assets/compiled/${id}/index.html`);
-    if (!resp.ok) throw new Error('Failed to load note');
-    const html = await resp.text();
-    output.innerHTML = `<div class="note-render fade-in">${html}</div>`;
-    scalePages();
+    const note = state.notes.find(n => n.id === id);
+    if (!note) throw new Error('Note not found');
+    const pageCount = note.pages || 1;
+    const pages = [];
+    for (let i = 1; i <= pageCount; i++) {
+      const r = await fetch(`assets/compiled/${id}/${i}.svg`);
+      if (!r.ok) throw new Error(`Failed to load page ${i}`);
+      pages.push(await r.text());
+    }
+    const html = pages.map((svg, i) => {
+      const label = pageCount > 1 ? `<div class="page-label">${i + 1} / ${pageCount}</div>` : '';
+      return `<div class="svg-page">${label}${svg}</div>`;
+    }).join('');
+    output.innerHTML = `<div class="svg-render fade-in">${html}</div>`;
     history.replaceState(null, '', `#${id}`);
   } catch (err) {
-    output.innerHTML = `<div class="typst-error fade-in"><h3>Failed to load note</h3><p>${err.message}</p></div>`;
+    output.innerHTML = `<div class="typst-error fade-in"><h3>Failed to load</h3><p>${err.message}</p></div>`;
   }
-
   sidebar.classList.remove('open');
 }
 
 function navigateHome() {
   state.activeId = null;
-  reader.classList.remove('note-mode');
+  reader.classList.remove('svg-mode');
   history.replaceState(null, '', window.location.pathname);
   highlightActive(null);
   output.innerHTML = `
     <div class="home-hero fade-in">
       <h1>Welcome to Notes</h1>
-      <p>Your personal knowledge base, written in Typst &amp; rendered beautifully.</p>
+      <p>Your personal knowledge base, written in Typst & rendered beautifully.</p>
     </div>`;
   sidebar.classList.remove('open');
 }
@@ -189,33 +195,6 @@ function navigateHome() {
 function highlightActive(id) {
   $$('.note-item').forEach(el => el.classList.toggle('active', el.dataset.id === id));
 }
-
-// ── Scale pages to fit viewport ──
-function scalePages() {
-  const containers = output.querySelectorAll('.note-page div[style*="position:relative"]');
-  containers.forEach(container => {
-    // Extract original width from style
-    const match = container.getAttribute('style').match(/width:(\d+)px/);
-    if (!match) return;
-    const origW = parseInt(match[1], 10);
-    // The container's parent (.note-page) has max-width: 820px
-    // Calculate scale to fit
-    const parentW = container.parentElement.offsetWidth;
-    if (parentW > 0 && parentW < origW) {
-      const scale = parentW / origW;
-      container.style.transform = `scale(${scale})`;
-      container.style.transformOrigin = 'top left';
-      container.style.height = `${container.offsetHeight * scale}px`;
-    }
-  });
-}
-
-// Resize handler
-let resizeTimer;
-window.addEventListener('resize', () => {
-  clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(scalePages, 200);
-});
 
 // ── Hash routing ──
 function handleHash() {

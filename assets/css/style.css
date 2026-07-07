@@ -338,44 +338,37 @@ a:hover { color: var(--accent-hover); }
   padding: 2.5rem 2rem 4rem;
   min-height: 100vh;
 }
-#reader.note-mode {
+#reader.svg-mode {
   max-width: none;
-  padding: 1rem 0;
+  padding: 1.5rem 0;
 }
 
-/* ---------- Note Render (HTML from pdftohtml) ---------- */
-.note-render {
+/* ---------- SVG Render ---------- */
+.svg-render {
   width: 100%;
 }
-.note-render .note-page {
-  overflow: hidden;
-}
-.note-render .note-page:not(:first-child) {
-  border-top: 1px solid var(--border);
-}
-
-/* Hide pdftohtml cruft */
-.note-render .note-page .xflip,
-.note-render .note-page .yflip,
-.note-render .note-page .xyflip,
-.note-render .note-page a[name],
-.note-render .note-page > style {
-  display: none;
-}
-
-/* Page container: keep original dimensions, scaled by JS */
-.note-render .note-page div[style*="position:relative"] {
-  position: relative;
+.svg-page {
+  max-width: 820px;
   margin: 0 auto;
-  overflow: hidden;
 }
-.note-render .note-page p {
-  position: absolute;
-  white-space: nowrap;
-  margin: 0;
-  padding: 0;
-  line-height: 1.4;
-  color: var(--text);
+.svg-page:not(:last-child) {
+  border-bottom: 1px solid var(--border-light);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+}
+.svg-page svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.page-label {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding: 0.25rem 0 0.5rem;
+  letter-spacing: 0.5px;
+  user-select: none;
 }
 
 /* Loading / error states inside reader */
